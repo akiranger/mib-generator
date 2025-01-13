@@ -1,0 +1,8 @@
+csv_file: "mib_data.csv"
+output_file: "MY-MIB.txt"
+module_name: "MY-MIB"
+organization: "My Organization"
+contact_info: "Contact Info"
+description: "Example MIB generated from CSV"
+base_oid: "1.3.6.1.4.1.9999"
+last_updated: "202501110000Z"

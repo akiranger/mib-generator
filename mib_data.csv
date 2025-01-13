@@ -1,0 +1,10 @@
+OID,Name,Type,Description,Access,Status,EnumValues
+1.3.6.1.4.1.9999.1,myString,DisplayString,An example string,read-only,current,
+1.3.6.1.4.1.9999.2,myInteger,Integer32,An example integer,read-write,current,
+1.3.6.1.4.1.9999.3,myEnum,INTEGER,An example enumeration,read-only,current,"red(1),green(2),blue(3)"
+1.3.6.1.4.1.9999.4,myGauge,Gauge32,An example gauge,read-only,current,
+1.3.6.1.4.1.9999.5,myCounter,Counter64,An example counter,read-only,current,
+1.3.6.1.4.1.9999.6,myTable,SEQUENCE,An example table,not-accessible,current,
+1.3.6.1.4.1.9999.6.1,myTableEntry,OBJECT IDENTIFIER,An example table entry,not-accessible,current,
+1.3.6.1.4.1.9999.6.1.1,myTableIndex,Integer32,Index for the table,read-only,current,
+1.3.6.1.4.1.9999.6.1.2,myTableValue,DisplayString,Value in the table,read-write,current,
