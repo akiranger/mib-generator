@@ -47,6 +47,8 @@ def generate_objects(df, module_name, base_oid):
     imports = defaultdict(set)
     objects = []
     enums = {}
+    sequences = {}
+    oid_map = {}
 
     for _, row in df.iterrows():
         oid = row.get("OID", "").strip()
@@ -71,19 +73,37 @@ def generate_objects(df, module_name, base_oid):
             enums[enum_name] = enum_values
             syntax = enum_name
 
+        if "Entry" in name:
+            sequences[name] = generate_sequence(name, oid, df)
+
         add_to_imports(imports, row.get("Type", "").strip())
+
+        oid_map[oid] = name
 
         objects.append(
             generate_object(
-                name, syntax, access, status, description, module_name, oid, base_oid
+                name,
+                syntax,
+                access,
+                status,
+                description,
+                module_name,
+                oid,
+                base_oid,
+                oid_map,
+                df,
             )
         )
 
     imports_section = generate_imports(imports)
     enums_section = generate_enums(enums)
+    sequences_section = "\n\n".join(sequences.values())
     objects_section = "\n\n".join(objects)
 
-    return imports_section, f"{enums_section}\n\n{objects_section}"
+    return (
+        imports_section,
+        f"{enums_section}\n\n{sequences_section}\n\n{objects_section}",
+    )
 
 
 def add_to_imports(imports, syntax):
@@ -123,20 +143,42 @@ def generate_enums(enums):
     return "\n\n".join(enum_definitions)
 
 
+def generate_sequence(name, entry_oid, df):
+    sequence_fields = []
+    for _, row in df.iterrows():
+        if row["OID"].startswith(f"{entry_oid}."):
+            field_name = row["Name"]
+            field_type = row["Type"]
+            sequence_fields.append(f"    {field_name}    {field_type}")
+    sequence_definition = (
+        f"{name} ::= SEQUENCE {{\n" + ",\n".join(sequence_fields) + "\n}"
+    )
+    return sequence_definition
+
+
 def generate_object(
-    name, syntax, access, status, description, module_name, oid, base_oid
+    name, syntax, access, status, description, module_name, oid, base_oid, oid_map, df
 ):
-    oid_parts = oid.split('.')
-    base_oid_parts = base_oid.split('.')
-    relative_oid = oid_parts[len(base_oid_parts):]
-    relative_oid_str = ' '.join(relative_oid)
+    oid_parts = oid.split(".")
+    base_oid_parts = base_oid.split(".")
+    relative_oid = oid_parts[len(base_oid_parts) :]
+    parent_oid = ".".join(oid_parts[:-1])
+    parent_name = oid_map.get(parent_oid, module_name)
+    relative_oid_str = relative_oid[-1]
+
+    index_clause = ""
+    if "Entry" in name:
+        index_oid = f"{oid}.1"
+        index_name = df[df["OID"] == index_oid]["Name"].values[0]
+        index_clause = f"    INDEX      {{ {index_name} }}\n"
+
     return f"""{name} OBJECT-TYPE
     SYNTAX      {syntax}
     MAX-ACCESS  {access}
     STATUS      {status}
     DESCRIPTION
         "{description}"
-    ::= {{ {module_name} {relative_oid_str} }}"""
+{index_clause}    ::= {{ {parent_name} {relative_oid_str} }}"""
 
 
 def main():

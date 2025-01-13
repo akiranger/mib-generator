@@ -21,6 +21,11 @@ myEnumVal ::= INTEGER {
     blue(3)
 }
 
+myTableEntry ::= SEQUENCE {
+    myTableIndex    Integer32,
+    myTableValue    DisplayString
+}
+
 myString OBJECT-TYPE
     SYNTAX      DisplayString
     MAX-ACCESS  read-only
@@ -75,7 +80,8 @@ myTableEntry OBJECT-TYPE
     STATUS      current
     DESCRIPTION
         "An example table entry"
-    ::= { MY-MIB 6 1 }
+    INDEX      { myTableIndex }
+    ::= { myTable 1 }
 
 myTableIndex OBJECT-TYPE
     SYNTAX      Integer32
@@ -83,7 +89,7 @@ myTableIndex OBJECT-TYPE
     STATUS      current
     DESCRIPTION
         "Index for the table"
-    ::= { MY-MIB 6 1 1 }
+    ::= { myTableEntry 1 }
 
 myTableValue OBJECT-TYPE
     SYNTAX      DisplayString
@@ -91,6 +97,6 @@ myTableValue OBJECT-TYPE
     STATUS      current
     DESCRIPTION
         "Value in the table"
-    ::= { MY-MIB 6 1 2 }
+    ::= { myTableEntry 2 }
 
 END
