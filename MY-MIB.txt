@@ -2,7 +2,7 @@ MY-MIB DEFINITIONS ::= BEGIN
 
 IMPORTS
     DisplayString
-        FROM SNMPv2-TC;
+        FROM SNMPv2-TC
     Counter64, Gauge32, Integer32, OBJECT IDENTIFIER
         FROM SNMPv2-SMI;
 

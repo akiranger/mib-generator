@@ -40,7 +40,7 @@ def generate_module_identity(config):
         f"    CONTACT-INFO \"{config['contact_info']}\"\n"
         f"    DESCRIPTION \"{config['description']}\"\n"
         f"    REVISION \"{config['last_updated']}\"\n"
-        f"    DESCRIPTION \"Initial version\"\n"
+        f'    DESCRIPTION "Initial version"\n'
         f"    ::= {{ {config['base_oid']} }}"
     )
 
@@ -54,7 +54,7 @@ def generate_objects(df, module_name, base_oid):
 
     for _, row in df.iterrows():
         oid, name, syntax, description, access, status, enum_values = parse_row(row)
-        if enum_values and enum_values.lower() != 'nan':
+        if enum_values and enum_values.lower() != "nan":
             syntax = handle_enum(name, enum_values, enums)
         if "Entry" in name:
             sequences[name] = generate_sequence(name, oid, df)
@@ -126,7 +126,7 @@ def generate_imports(imports):
     for module, symbols in imports.items():
         imports_list.append(f"    {', '.join(sorted(symbols))}\n        FROM {module}")
 
-    return "IMPORTS\n" + ";\n".join(imports_list) + ";"
+    return "IMPORTS\n" + "\n".join(imports_list) + ";"
 
 
 def generate_enums(enums):
@@ -150,9 +150,7 @@ def generate_sequence(name, entry_oid, df):
             field_type = row["Type"]
             sequence_fields.append(f"    {field_name}    {field_type}")
     sequence_definition = (
-        f"{name} ::= SEQUENCE {{\n"
-        f"{',\n'.join(sequence_fields)}\n"
-        f"}}"
+        f"{name} ::= SEQUENCE {{\n" f"{',\n'.join(sequence_fields)}\n" f"}}"
     )
     return sequence_definition
 
@@ -179,7 +177,7 @@ def generate_object(
         f"    MAX-ACCESS  {access}\n"
         f"    STATUS      {status}\n"
         f"    DESCRIPTION\n"
-        f"        \"{description}\"\n"
+        f'        "{description}"\n'
         f"{index_clause}    ::= {{ {parent_name} {relative_oid_str} }}"
     )
 
