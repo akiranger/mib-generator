@@ -33,14 +33,16 @@ def generate_definitions(module_name):
 
 
 def generate_module_identity(config):
-    return f"""{config['module_name']} MODULE-IDENTITY
-    LAST-UPDATED "{config['last_updated']}"
-    ORGANIZATION "{config['organization']}"
-    CONTACT-INFO "{config['contact_info']}"
-    DESCRIPTION "{config['description']}"
-    REVISION "{config['last_updated']}"
-    DESCRIPTION "Initial version"
-    ::= {{ {config['base_oid']} }}"""
+    return (
+        f"{config['module_name']} MODULE-IDENTITY\n"
+        f"    LAST-UPDATED \"{config['last_updated']}\"\n"
+        f"    ORGANIZATION \"{config['organization']}\"\n"
+        f"    CONTACT-INFO \"{config['contact_info']}\"\n"
+        f"    DESCRIPTION \"{config['description']}\"\n"
+        f"    REVISION \"{config['last_updated']}\"\n"
+        f"    DESCRIPTION \"Initial version\"\n"
+        f"    ::= {{ {config['base_oid']} }}"
+    )
 
 
 def generate_objects(df, module_name, base_oid):
@@ -51,35 +53,13 @@ def generate_objects(df, module_name, base_oid):
     oid_map = {}
 
     for _, row in df.iterrows():
-        oid = row.get("OID", "").strip()
-        name = row.get("Name", "").strip()
-        syntax = row.get("Type", "").strip()
-        description = row.get("Description", "").strip() or "No description provided."
-        access = row.get("Access", "not-accessible").strip()
-        status = row.get("Status", "current").strip()
-        enum_values = str(row.get("EnumValues", "")).strip()
-
-        # Debugging output
-        print(f"OID: {oid}")
-        print(f"Name: {name}")
-        print(f"Syntax: {syntax}")
-        print(f"Description: {description}")
-        print(f"Access: {access}")
-        print(f"Status: {status}")
-        print(f"EnumValues: {enum_values}")
-
-        if enum_values and enum_values.lower() != "nan":
-            enum_name = f"{name}Val"
-            enums[enum_name] = enum_values
-            syntax = enum_name
-
+        oid, name, syntax, description, access, status, enum_values = parse_row(row)
+        if enum_values and enum_values.lower() != 'nan':
+            syntax = handle_enum(name, enum_values, enums)
         if "Entry" in name:
             sequences[name] = generate_sequence(name, oid, df)
-
         add_to_imports(imports, row.get("Type", "").strip())
-
         oid_map[oid] = name
-
         objects.append(
             generate_object(
                 name,
@@ -104,6 +84,23 @@ def generate_objects(df, module_name, base_oid):
         imports_section,
         f"{enums_section}\n\n{sequences_section}\n\n{objects_section}",
     )
+
+
+def parse_row(row):
+    oid = row.get("OID", "").strip()
+    name = row.get("Name", "").strip()
+    syntax = row.get("Type", "").strip()
+    description = row.get("Description", "").strip() or "No description provided."
+    access = row.get("Access", "not-accessible").strip()
+    status = row.get("Status", "current").strip()
+    enum_values = str(row.get("EnumValues", "")).strip()
+    return oid, name, syntax, description, access, status, enum_values
+
+
+def handle_enum(name, enum_values, enums):
+    enum_name = f"{name}Val"
+    enums[enum_name] = enum_values
+    return enum_name
 
 
 def add_to_imports(imports, syntax):
@@ -136,9 +133,11 @@ def generate_enums(enums):
     enum_definitions = []
     for enum_name, enum_values in enums.items():
         values = enum_values.split(",")
-        enum_def = f"{enum_name} ::= INTEGER {{\n"
-        enum_def += ",\n".join(f"    {value.strip()}" for value in values)
-        enum_def += "\n}"
+        enum_def = (
+            f"{enum_name} ::= INTEGER {{\n"
+            f"{',\n'.join(f'    {value.strip()}' for value in values)}\n"
+            f"}}"
+        )
         enum_definitions.append(enum_def)
     return "\n\n".join(enum_definitions)
 
@@ -151,7 +150,9 @@ def generate_sequence(name, entry_oid, df):
             field_type = row["Type"]
             sequence_fields.append(f"    {field_name}    {field_type}")
     sequence_definition = (
-        f"{name} ::= SEQUENCE {{\n" + ",\n".join(sequence_fields) + "\n}"
+        f"{name} ::= SEQUENCE {{\n"
+        f"{',\n'.join(sequence_fields)}\n"
+        f"}}"
     )
     return sequence_definition
 
@@ -172,13 +173,15 @@ def generate_object(
         index_name = df[df["OID"] == index_oid]["Name"].values[0]
         index_clause = f"    INDEX      {{ {index_name} }}\n"
 
-    return f"""{name} OBJECT-TYPE
-    SYNTAX      {syntax}
-    MAX-ACCESS  {access}
-    STATUS      {status}
-    DESCRIPTION
-        "{description}"
-{index_clause}    ::= {{ {parent_name} {relative_oid_str} }}"""
+    return (
+        f"{name} OBJECT-TYPE\n"
+        f"    SYNTAX      {syntax}\n"
+        f"    MAX-ACCESS  {access}\n"
+        f"    STATUS      {status}\n"
+        f"    DESCRIPTION\n"
+        f"        \"{description}\"\n"
+        f"{index_clause}    ::= {{ {parent_name} {relative_oid_str} }}"
+    )
 
 
 def main():
